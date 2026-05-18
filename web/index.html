@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BinWeb - Lightweight Native Wrapper Sandbox</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        /* GLOBAL RESET - Fixes 90% of layout overflow issues */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #030712;
+            --surface: #0b0f19;
+            --surface-card: #0f172a;
+            --surface-hover: #1e293b;
+            --primary: #38bdf8;
+            --primary-glow: rgba(56, 189, 248, 0.25);
+            --accent: #818cf8;
+            --accent-glow: rgba(129, 140, 248, 0.15);
+            --success: #34d399;
+            --success-glow: rgba(52, 211, 153, 0.15);
+            --text: #f8fafc;
+            --text-muted: #64748b;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(56, 189, 248, 0.35);
+            --font-title: 'Outfit', sans-serif;
+            --font-main: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --bg-grad-1: rgba(56, 189, 248, 0.04);
+            --bg-grad-2: rgba(129, 140, 248, 0.04);
+        }
+
+        [data-theme="light"] {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --surface-card: #f1f5f9;
+            --surface-hover: #e2e8f0;
+            --primary: #0284c7;
+            --primary-glow: rgba(2, 132, 199, 0.15);
+            --accent: #4f46e5;
+            --accent-glow: rgba(79, 70, 229, 0.1);
+            --success: #16a34a;
+            --success-glow: rgba(22, 163, 74, 0.15);
+            --text: #0f172a;
+            --text-muted: #475569;
+            --border: rgba(15, 23, 42, 0.12);
+            --border-hover: rgba(2, 132, 199, 0.45);
+            --bg-grad-1: rgba(2, 132, 199, 0.08);
+            --bg-grad-2: rgba(79, 70, 229, 0.08);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: var(--font-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.35s ease, color 0.35s ease;
+            overflow-x: hidden;
+            background-image:
+                radial-gradient(circle at 10% 20%, var(--bg-grad-1) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, var(--bg-grad-2) 0%, transparent 40%);
+        }
+
+        header {
+            padding: 1.25rem 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            background: rgba(11, 15, 25, 0.7);
+            backdrop-filter: blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            transition: border-color 0.3s;
+        }
+
+        [data-theme="light"] header {
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            cursor: pointer;
+        }
+
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: var(--font-title);
+            font-weight: 900;
+            font-size: 1.4rem;
+            box-shadow: 0 4px 20px var(--primary-glow);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .brand-container:hover .brand-logo {
+            transform: rotate(-10deg) scale(1.05);
+        }
+
+        .brand-title {
+            font-family: var(--font-title);
+            font-size: 1.65rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+            transition: all 0.3s;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .btn-theme {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0;
+            border-radius: 50%;
+            cursor: pointer;
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-theme:hover {
+            transform: rotate(30deg) scale(1.08);
+            background: var(--surface-hover);
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .btn-theme svg {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2px;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 2.5rem auto;
+            padding: 0 2rem;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+            flex: 1;
+        }
+
+        /* Hero */
+        .hero-section {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 2rem;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.25);
+            transition: border-color 0.3s;
+            width: 100%;
+        }
+
+        [data-theme="light"] .hero-section {
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        .hero-section:hover {
+            border-color: var(--border-hover);
+        }
+
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: var(--primary-glow);
+            color: var(--primary);
+            padding: 0.6rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 0.85rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .badge-pulse {
+            width: 10px;
+            height: 10px;
+            background-color: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.6);
+            }
+
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(52, 211, 153, 0);
+            }
+
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
+            }
+        }
+
+        .hero-title {
+            font-family: var(--font-title);
+            font-size: 3.75rem;
+            font-weight: 900;
+            margin: 0 0 1.25rem 0;
+            letter-spacing: -1.75px;
+            line-height: 1.1;
+            background: linear-gradient(135deg, var(--text) 40%, var(--text-muted) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            color: var(--text-muted);
+            max-width: 650px;
+            margin: 0 auto;
+            line-height: 1.65;
+            font-size: 1.25rem;
+            font-weight: 400;
+        }
+
+        /* Responsive Layout grid */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2.5rem;
+            width: 100%;
+        }
+
+        .card {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            gap: 1.75rem;
+            backdrop-filter: blur(5px);
+            width: 100%;
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            border-color: var(--border-hover);
+            box-shadow: 0 25px 40px -15px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .card-icon {
+            font-size: 1.75rem;
+            background: var(--primary-glow);
+            width: 50px;
+            height: 50px;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+            flex-shrink: 0;
+        }
+
+        .card-title {
+            font-family: var(--font-title);
+            font-size: 1.45rem;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+
+        /* Modern styled inputs & selectors */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            width: 100%;
+        }
+
+        .form-label {
+            font-family: var(--font-title);
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .config-select-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+        }
+
+        .config-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            width: 100%;
+        }
+
+        /* Futuristic Inputs and custom dropdowns */
+        textarea,
+        input,
+        select {
+            background-color: var(--surface-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            font-family: var(--font-main);
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+            width: 100%;
+        }
+
+        textarea:hover,
+        input:hover,
+        select:hover {
+            border-color: rgba(56, 189, 248, 0.4);
+        }
+
+        textarea:focus,
+        input:focus,
+        select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 12px var(--primary-glow), inset 0 2px 4px rgba(0, 0, 0, 0.05);
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+
+        /* Selection box styling */
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            cursor: pointer;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+            background-repeat: no-repeat;
+            background-position: right 1.25rem center;
+            background-size: 1.15rem;
+            padding-right: 3rem;
+        }
+
+        [data-theme="light"] select {
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%230284c7' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+        }
+
+        textarea {
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        /* Diagnostics */
+        .diag-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .diag-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 0.85rem;
+            border: 1px solid var(--border);
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            gap: 1rem;
+        }
+
+        .diag-item:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .diag-label {
+            color: var(--text-muted);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .diag-val {
+            font-family: var(--font-mono);
+            color: var(--primary);
+            font-weight: 700;
+            background: var(--primary-glow);
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid rgba(56, 189, 248, 0.15);
+            text-align: right;
+            word-break: break-all;
+            /* Prevents long URLs from breaking the layout */
+        }
+
+        /* Live simulator preview */
+        .preview-window {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 1.25rem;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            height: 380px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            width: 100%;
+        }
+
+        .window-titlebar {
+            background: var(--surface-card);
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .ctrl-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .ctrl-close {
+            background: #ef4444;
+        }
+
+        .ctrl-min {
+            background: #f59e0b;
+        }
+
+        .ctrl-max {
+            background: #10b981;
+        }
+
+        .window-title {
+            font-family: var(--font-title);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 40%;
+        }
+
+        .window-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--bg);
+            position: relative;
+            overflow: hidden;
+            background-image:
+                radial-gradient(circle at 50% 50%, var(--accent-glow), transparent 70%);
+            transition: background-color 0.3s, background-image 0.3s;
+        }
+
+        .sim-app-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 2rem;
+            text-align: center;
+            max-width: 90%;
+            width: 320px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+            transform: scale(0.95);
+            transition: all 0.3s;
+        }
+
+        .sim-app-title {
+            font-family: var(--font-title);
+            font-weight: 900;
+            font-size: 1.75rem;
+            margin: 0 0 0.5rem 0;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Buttons & Actions */
+        .btn {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white !important;
+            border: none;
+            padding: 0.9rem 1.75rem;
+            border-radius: 0.75rem;
+            font-family: var(--font-title);
+            font-weight: 800;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            box-shadow: 0 4px 15px var(--primary-glow);
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            opacity: 0.95;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px var(--primary-glow);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-outline {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            color: var(--text) !important;
+            box-shadow: none;
+        }
+
+        .btn-outline:hover {
+            background: var(--surface-hover);
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        /* IndexedDB Live Console */
+        .console-box {
+            background: #020617;
+            border: 1px solid var(--border);
+            border-radius: 0.85rem;
+            padding: 1.25rem;
+            height: 150px;
+            overflow-y: auto;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+            width: 100%;
+        }
+
+        .console-line {
+            display: flex;
+            gap: 0.75rem;
+            line-height: 1.5;
+        }
+
+        .console-time {
+            color: var(--text-muted);
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .console-msg {
+            color: var(--success);
+            word-break: break-word;
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background: #020617;
+            border: 1px solid var(--border);
+            border-radius: 0.85rem;
+            padding: 1.5rem;
+            overflow-x: auto;
+            position: relative;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+            width: 100%;
+        }
+
+        pre {
+            margin: 0;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #c7d2fe;
+        }
+
+        .copy-btn {
+            position: fixed;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 0.4rem 0.8rem;
+            font-family: var(--font-title);
+            font-weight: 700;
+            font-size: 0.75rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            backdrop-filter: blur(5px);
+        }
+
+        .copy-btn:hover {
+            color: var(--text);
+            border-color: var(--primary);
+            background: var(--primary-glow);
+        }
+
+        footer.app-footer {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            border-top: 1px solid var(--border);
+            margin-top: 5rem;
+            letter-spacing: 0.5px;
+        }
+
+        footer.app-footer strong {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        /* Light Theme Elements Contrast overrides */
+        [data-theme="light"] textarea,
+        [data-theme="light"] input,
+        [data-theme="light"] select {
+            background-color: #f8fafc;
+            border-color: rgba(15, 23, 42, 0.15);
+            color: #0f172a;
+        }
+
+        [data-theme="light"] textarea:focus,
+        [data-theme="light"] input:focus,
+        [data-theme="light"] select:focus {
+            background-color: #ffffff;
+            border-color: var(--primary);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        [data-theme="light"] .diag-item {
+            background: #ffffff;
+            border-color: rgba(15, 23, 42, 0.08);
+        }
+
+        [data-theme="light"] .preview-window {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+        }
+
+        [data-theme="light"] .console-box,
+        [data-theme="light"] .code-block {
+            background: #090d16;
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        /* GRID BREAKPOINT LOGIC - The true fix for the overflow */
+        @media (min-width: 992px) {
+            .grid-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .col-span-2 {
+                grid-column: span 2;
+            }
+        }
+
+        /* 📱 Mobile Responsive Media Queries */
+        @media (max-width: 768px) {
+            main {
+                padding: 0 1rem;
+                margin: 1.5rem auto;
+                gap: 1.5rem;
+            }
+
+            .hero-section {
+                padding: 2.5rem 1.25rem;
+                border-radius: 1.25rem;
+            }
+
+            .hero-title {
+                font-size: 2.25rem;
+                letter-spacing: -1px;
+            }
+
+            .hero-subtitle {
+                font-size: 1rem;
+                line-height: 1.5;
+            }
+
+            .badge-status {
+                margin-bottom: 1.25rem;
+                padding: 0.5rem 1.25rem;
+            }
+
+            .card {
+                padding: 1.50rem;
+                border-radius: 1.25rem;
+                gap: 1.25rem;
+            }
+
+            .preview-window {
+                height: 320px;
+            }
+
+            .window-titlebar {
+                padding: 0.6rem 1rem;
+            }
+
+            .sim-app-card {
+                padding: 1.5rem;
+            }
+
+            .sim-app-title {
+                font-size: 1.45rem;
+            }
+
+            header {
+                padding: 1rem 1.5rem;
+            }
+
+            .brand-title {
+                font-size: 1.35rem;
+            }
+
+            .brand-logo {
+                width: 34px;
+                height: 34px;
+                font-size: 1.15rem;
+            }
+
+            .btn {
+                padding: 0.8rem 1.5rem;
+                font-size: 0.9rem;
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .btn-theme {
+                width: 38px;
+                height: 38px;
+            }
+
+            .console-box {
+                height: 120px;
+            }
+
+            .diag-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .diag-val {
+                width: 100%;
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="brand-container" onclick="resetConfigTitle()">
+            <div class="brand-logo">B</div>
+            <div class="brand-title" id="pageBrandTitle">BinWeb</div>
+        </div>
+        <div class="header-actions">
+            <button class="btn-theme" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <div class="hero-section">
+            <div class="badge-status">
+                <div class="badge-pulse"></div>
+                <span>Unified Source of Truth Active</span>
+            </div>
+            <h1 class="hero-title">BinWeb Native Shell</h1>
+            <p class="hero-subtitle">You are running the ultimate, zero-overhead Chromium WebView sandbox template.
+                Build beautifully, persist dynamically, compile instantly to Windows & Android.</p>
+        </div>
+
+        <div class="grid-container">
+
+            <div class="card col-span-2 simulator-card">
+                <div class="card-header">
+                    <div class="card-icon">🖥️</div>
+                    <h3 class="card-title">Live Wrapper Simulator</h3>
+                </div>
+                <p style="font-size: 0.95rem; color: var(--text-muted); margin:0; line-height: 1.5;">
+                    This simulated shell responds in **real-time** as you change settings below. See how your app
+                    dynamically binds title, layout, and theme natively inside the wrapper.
+                </p>
+                <div class="preview-window">
+                    <div class="window-titlebar">
+                        <div class="window-controls">
+                            <div class="ctrl-dot ctrl-close"></div>
+                            <div class="ctrl-dot ctrl-min"></div>
+                            <div class="ctrl-dot ctrl-max"></div>
+                        </div>
+                        <div class="window-title" id="simTitle">BinWeb Application</div>
+                        <div style="width: 50px"></div>
+                    </div>
+                    <div class="window-content" id="simContent">
+                        <div class="sim-app-card">
+                            <h2 class="sim-app-title" id="simAppTitle">BinWeb App</h2>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 1.5rem 0;"
+                                id="simAppDesc">Running inside hardware-accelerated wrapper context.</p>
+                            <span class="badge-status"
+                                style="margin: 0; padding: 0.4rem 1rem; font-size: 0.75rem; border-color: rgba(52, 211, 153, 0.25)">
+                                <div class="badge-pulse"></div>
+                                <span style="font-weight: 700;">Storage Verified</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">📊</div>
+                    <h3 class="card-title">Diagnostics Center</h3>
+                </div>
+                <div class="diag-list">
+                    <div class="diag-item">
+                        <span class="diag-label">Active Host Origin</span>
+                        <span class="diag-val" id="diagOrigin">file://</span>
+                    </div>
+                    <div class="diag-item">
+                        <span class="diag-label">Storage Engine</span>
+                        <span class="diag-val" id="diagStorage">localStorage</span>
+                    </div>
+                    <div class="diag-item">
+                        <span class="diag-label">IndexedDB State</span>
+                        <span class="diag-val"
+                            style="color: var(--success); background: var(--success-glow); border-color: rgba(52, 211, 153, 0.15);">ACTIVE</span>
+                    </div>
+                    <div class="diag-item">
+                        <span class="diag-label">Render Engine</span>
+                        <span class="diag-val" id="diagEngine">Chromium WebView</span>
+                    </div>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0; line-height: 1.55;">
+                    💡 Serves as a full diagnostic panel validating our custom C++ <code>file://</code> routing fix.
+                    This origin context enables unrestricted standard storage capabilities.
+                </p>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">💾</div>
+                    <h3 class="card-title">localStorage Sandbox</h3>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Persistent Notepad</label>
+                    <textarea id="notepad" rows="4"
+                        placeholder="Write something here... The wrapper will save it natively and it will persist even if you shut down the application!"></textarea>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <button class="btn" onclick="saveNote()">Save Natively</button>
+                    <span id="saveStatus"
+                        style="font-size:0.9rem; font-weight: 700; color: var(--success); display:none">✓ Saved!</span>
+                </div>
+            </div>
+
+            <div class="card col-span-2">
+                <div class="card-header">
+                    <div class="card-icon">🗄️</div>
+                    <h3 class="card-title">IndexedDB Live Console</h3>
+                </div>
+                <p style="font-size: 0.95rem; color: var(--text-muted); margin:0; line-height:1.5;">
+                    Store objects directly within an isolated, multi-megabyte structured database client-side. Trigger
+                    live read/write events.
+                </p>
+                <div class="console-box" id="dbConsole">
+                    <div class="console-line"><span class="console-time">[00:00:00]</span> <span class="console-msg"
+                            style="color:var(--text-muted)">IndexedDB Sandbox Initialized. Click "Record Log Event" to
+                            run queries.</span></div>
+                </div>
+                <div style="display:flex; gap: 1.25rem; flex-wrap: wrap;">
+                    <button class="btn" onclick="triggerDBLog()">Record Log Event</button>
+                    <button class="btn btn-outline" onclick="clearDBLogs()">Wipe Database</button>
+                </div>
+            </div>
+
+            <div class="card col-span-2">
+                <div class="card-header">
+                    <div class="card-icon">🛠️</div>
+                    <h3 class="card-title">Wrapper Code Configurator</h3>
+                </div>
+                <p style="font-size: 0.95rem; color: var(--text-muted); margin:0; line-height: 1.5;">
+                    Generate standard, clean, ready-to-use C++ and Kotlin configurations to package your custom web app
+                    dynamically.
+                </p>
+                <div class="config-select-group">
+                    <div class="config-item">
+                        <label class="form-label">Platform Target</label>
+                        <select id="configPlatform" onchange="generateConfig()">
+                            <option value="cpp">Windows C++ (NativeApp.cpp)</option>
+                            <option value="kotlin">Android Kotlin (MainActivity.kt)</option>
+                        </select>
+                    </div>
+                    <div class="config-item">
+                        <label class="form-label">Window App Title</label>
+                        <input type="text" id="configTitle" value="My Native App" oninput="handleTitleChange()">
+                    </div>
+                </div>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyConfig()">Copy</button>
+                    <pre><code id="codeOutput">// Code generated dynamically will appear here</code></pre>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        Crafted with love by <strong>Yuvi</strong> & the BinWeb Community
+    </footer>
+
+    <script>
+        // Init Storage Sandboxes
+        document.getElementById('notepad').value = localStorage.getItem('sandbox_note') || '';
+
+        // Detect engine/diagnostic fields
+        document.getElementById('diagOrigin').innerText = window.location.protocol + '//' + (window.location.pathname.split('/').pop() || '');
+
+        const ua = navigator.userAgent;
+        let engine = "Chromium WebView2";
+        if (ua.includes("Android")) {
+            engine = "Android System WebView";
+        }
+        document.getElementById('diagEngine').innerText = engine;
+
+        // Custom Titlebar bindings in Real-Time
+        function handleTitleChange() {
+            const titleInput = document.getElementById('configTitle');
+            let val = titleInput.value.trim();
+            if (!val) val = "BinWeb Sandbox";
+
+            // 1. Update the document title
+            document.title = "BinWeb - " + val;
+
+            // 2. Update the Page Header Title
+            document.getElementById('pageBrandTitle').innerText = val;
+
+            // 3. Update the Simulator Window Elements
+            document.getElementById('simTitle').innerText = val;
+            document.getElementById('simAppTitle').innerText = val;
+
+            // 4. Regenerate compiler code block
+            generateConfig();
+        }
+
+        function resetConfigTitle() {
+            document.getElementById('configTitle').value = "BinWeb";
+            handleTitleChange();
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.body.getAttribute('data-theme');
+            if (currentTheme === 'light') {
+                document.body.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.body.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // Restore theme
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.setAttribute('data-theme', 'light');
+        }
+
+        // Notepad Actions
+        function saveNote() {
+            const val = document.getElementById('notepad').value;
+            localStorage.setItem('sandbox_note', val);
+            const status = document.getElementById('saveStatus');
+            status.style.display = 'inline';
+            setTimeout(() => { status.style.display = 'none'; }, 2000);
+        }
+
+        // IndexedDB Actions
+        let db;
+        const request = window.indexedDB.open("BinWebDB", 1);
+        request.onupgradeneeded = function (event) {
+            db = event.target.result;
+            db.createObjectStore("logs", { keyPath: "id", autoIncrement: true });
+        };
+        request.onsuccess = function (event) {
+            db = event.target.result;
+        };
+
+        function printConsole(msg, isSystem = false) {
+            const box = document.getElementById('dbConsole');
+            const time = new Date().toTimeString().split(' ')[0];
+            const line = document.createElement('div');
+            line.className = 'console-line';
+            line.innerHTML = `<span class="console-time">[${time}]</span> <span class="console-msg" style="${isSystem ? 'color:var(--text-muted)' : ''}">${msg}</span>`;
+            box.appendChild(line);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function triggerDBLog() {
+            if (!db) return;
+            const transaction = db.transaction(["logs"], "readwrite");
+            const store = transaction.objectStore("logs");
+            const entry = { message: "Sandbox record committed", timestamp: Date.now() };
+
+            const addReq = store.add(entry);
+            addReq.onsuccess = function () {
+                printConsole(`Wrote entry to database: "${entry.message}"`);
+
+                // Read and count entries
+                const countReq = store.count();
+                countReq.onsuccess = function () {
+                    printConsole(`Total records stored in database: ${countReq.result}`);
+                };
+            };
+        }
+
+        function clearDBLogs() {
+            if (!db) return;
+            const transaction = db.transaction(["logs"], "readwrite");
+            const store = transaction.objectStore("logs");
+            const clearReq = store.clear();
+            clearReq.onsuccess = function () {
+                printConsole("Database tables completely wiped.", true);
+            };
+        }
+
+        // Code Configurator Generation
+        function generateConfig() {
+            const platform = document.getElementById('configPlatform').value;
+            const title = document.getElementById('configTitle').value || "BinWeb Application";
+            const codeOutput = document.getElementById('codeOutput');
+
+            if (platform === 'cpp') {
+                codeOutput.innerText = `// core/NativeApp.cpp - Windows C++ Packaging Configuration
+NativeApp::NativeApp() {
+    // Disable DevTools (false), preserve right-click context menus
+    auto* webview_instance = new webview::webview(false, nullptr);
+    webview_instance->set_title("${title}");
+    webview_instance->set_size(1024, 768, WEBVIEW_HINT_NONE);
+    w = webview_instance;
+}`;
+            } else {
+                codeOutput.innerText = `// platform/android/.../MainActivity.kt - Android Kotlin Web Container
+class MainActivity : AppCompatActivity() {
+    private lateinit var webView: WebView
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        webView = findViewById(R.id.webview)
+        webView.webViewClient = WebViewClient()
+
+        webView.settings.apply {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+            databaseEnabled = true
+            allowFileAccess = true
+        }
+
+        // Title sets via manifest; single-source assets map natively
+        webView.loadUrl("file:///android_asset/index.html")
+    }
+}`;
+            }
+        }
+
+        function copyConfig() {
+            const code = document.getElementById('codeOutput').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.innerText = 'Copied!';
+                setTimeout(() => { btn.innerText = 'Copy'; }, 2000);
+            });
+        }
+
+        // Trigger first build init
+        handleTitleChange();
+    </script>
+</body>
+
+</html>

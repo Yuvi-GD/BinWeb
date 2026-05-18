@@ -1,0 +1,50 @@
+# Build Outputs
+build/
+bin/
+lib/
+out/
+dist/
+
+# Visual Studio files
+.vs/
+*.user
+*.suo
+*.userossc
+*.sln.docstates
+*.suo
+*.db
+*.ipch
+*.aps
+*.ncb
+*.sdf
+*.opensdf
+*.vcproj
+*.vcxproj
+*.filters
+VisualStudio.opendb
+
+# VS Code IDE files
+.vscode/
+
+# Auto-generated assets (Compiled by C++ embedder tool at runtime)
+core/web_content.h
+
+# Temporary storage (Local Storage emulation folders)
+storage/
+
+# Temporary and OS junk files
+*.tmp
+*.log
+Thumbs.db
+.DS_Store
+
+# Android Studio & Gradle
+.idea/
+.gradle/
+local.properties
+/platform/android/.idea/
+/platform/android/.gradle/
+/platform/android/local.properties
+/platform/android/app/build/
+/platform/android/build/
+
